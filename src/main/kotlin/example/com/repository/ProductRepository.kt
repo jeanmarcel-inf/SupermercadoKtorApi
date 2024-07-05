@@ -2,7 +2,6 @@ package example.com.repository
 
 import example.com.db.ProductDAO
 import example.com.db.ProductTable
-import example.com.db.daoToModel
 import example.com.db.suspendTransaction
 import example.com.model.Product
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -11,7 +10,14 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 class ProductRepository : IProductRepository {
     override suspend fun allProducts(): List<Product> = suspendTransaction {
-        ProductDAO.all().map(::daoToModel)
+        ProductDAO.all().map {
+            Product(
+                productId = it.productId.value,
+                name = it.name,
+                price = it.price,
+                category = it.category
+            )
+        }
     }
 
     override suspend fun addProduct(product: Product) : Unit = suspendTransaction {

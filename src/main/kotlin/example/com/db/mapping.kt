@@ -10,7 +10,8 @@ import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 
-object ProductTable : IntIdTable("product", "ProductId" ) {
+object ProductTable : IntIdTable("product", columnName = "productId" ) {
+    val productId = integer("ProductId").autoIncrement().entityId()
     val name = varchar("ProductName", 100)
     val price = float("Price")
     val category = varchar("Category", 40)
@@ -19,6 +20,7 @@ object ProductTable : IntIdTable("product", "ProductId" ) {
 class ProductDAO(productId: EntityID<Int>) : IntEntity(productId) {
     companion object : IntEntityClass<ProductDAO>(ProductTable)
 
+    var productId by ProductTable.productId
     var name by ProductTable.name
     var price by ProductTable.price
     var category by ProductTable.category
@@ -28,9 +30,9 @@ class ProductDAO(productId: EntityID<Int>) : IntEntity(productId) {
 suspend fun <T> suspendTransaction(block: Transaction.() -> T): T =
     newSuspendedTransaction(Dispatchers.IO, statement = block)
 
-// DOCS -> daoToModel() transforms an instance of the DAO type to the object.
-fun daoToModel(dao: ProductDAO) = Product(
-    dao.name,
-    dao.price,
-    dao.category
-)
+//// DOCS -> daoToModel() transforms an instance of the DAO type to the object.
+//fun daoToModel(dao: ProductDAO) = Product(
+//    dao.name,
+//    dao.price,
+//    dao.category
+//)
