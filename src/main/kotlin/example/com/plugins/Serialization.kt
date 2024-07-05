@@ -35,15 +35,22 @@ fun Application.configureSerialization(repository: ProductRepository) {
                 }
             }
 
-//            delete {
-//                try {
-//                    val product = call.receive<Product>()
-//                    repository.removeProduct(product)
-//                    call.respond(status = HttpStatusCode.OK, "Registro deletado com sucesso!")
-//                } catch (ex: Exception) {
-//                    call.respond(status = HttpStatusCode.BadRequest, message = "Deu erro")
-//                }
-//            }
+            route("/{id}") {
+                delete {
+                    val productId = call.parameters["id"]?.toIntOrNull()
+                    if (productId == null) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid ID")
+                        return@delete
+                    }
+
+                    val deleted = repository.deleteProduct(productId)
+                    if (deleted) {
+                        call.respond(HttpStatusCode.NoContent)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Product not found or couldn't be deleted")
+                    }
+                }
+            }
 
         }
         get("/json/kotlinx-serialization") {

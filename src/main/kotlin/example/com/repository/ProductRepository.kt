@@ -7,6 +7,7 @@ import example.com.db.suspendTransaction
 import example.com.model.Product
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
 
 class ProductRepository : IProductRepository {
     override suspend fun allProducts(): List<Product> = suspendTransaction {
@@ -22,10 +23,15 @@ class ProductRepository : IProductRepository {
 
     }
 
-    override suspend fun removeProduct(product: Product): Boolean = suspendTransaction {
-        val rowsDeleted = ProductTable.deleteWhere {
-            ProductTable.name eq name
+    override suspend fun deleteProduct(productId: Int): Boolean {
+        return try {
+            transaction {
+                val deletedRows = ProductTable.deleteWhere { ProductTable.id eq productId }
+                deletedRows > 0
+            }
+        } catch (e: Exception) {
+            // Log the exception or handle it as needed
+            false
         }
-        rowsDeleted == 1
     }
 }
