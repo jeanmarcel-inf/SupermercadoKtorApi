@@ -1,5 +1,6 @@
 package example.com.plugins
 
+import example.com.db.ProductDAO
 import example.com.model.Product
 import example.com.repository.ProductRepository
 import io.ktor.http.*
@@ -10,6 +11,9 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 fun Application.configureSerialization(repository: ProductRepository) {
     install(ContentNegotiation) {
@@ -26,12 +30,10 @@ fun Application.configureSerialization(repository: ProductRepository) {
             post {
                 try {
                     val product = call.receive<Product>()
-                    repository.addProduct(product)
-                    call.respond(status = HttpStatusCode.OK, product)
-                } catch (ex: IllegalStateException) {
-                    call.respond(HttpStatusCode.BadRequest)
-                } catch (ex: JsonConvertException) {
-                    call.respond(HttpStatusCode.BadRequest)
+                    val createdProduct = runBlocking { repository.addProduct(product) }
+                    call.respond(HttpStatusCode.Created, createdProduct)
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, "Failed to add product: ${e.message}")
                 }
             }
 
